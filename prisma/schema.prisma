@@ -1,0 +1,234 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String               @id @default(uuid())
+  email        String               @unique
+  passwordHash String
+  displayName  String
+  sessions     Session[]
+  memberships  BusinessMembership[]
+  events       InvoiceEvent[]       @relation("EventActor")
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Business {
+  id                    String               @id @default(uuid())
+  name                  String
+  legalName             String?
+  email                 String?
+  phone                 String?
+  addressLine1          String?
+  addressLine2          String?
+  city                  String?
+  region                String?
+  postalCode            String?
+  country               String?
+  taxIdentifier         String?
+  logoDataUrl           String?
+  defaultCurrency       String               @default("USD")
+  timezone              String               @default("UTC")
+  invoicePrefix         String               @default("INV")
+  defaultPaymentTerms   String?
+  defaultTaxMode        String               @default("EXCLUSIVE")
+  version               Int                  @default(1)
+  memberships           BusinessMembership[]
+  customers             Customer[]
+  taxRates              TaxRate[]
+  invoices              Invoice[]
+  events                InvoiceEvent[]
+  invoiceSequences      InvoiceSequence[]
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  deletedAt             DateTime?
+}
+
+model BusinessMembership {
+  id         String   @id @default(uuid())
+  userId     String
+  businessId String
+  role       String   @default("OWNER")
+  permissions String  @default("{}")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, businessId])
+  @@index([businessId, role])
+}
+
+model InvoiceSequence {
+  id         String   @id @default(uuid())
+  businessId String
+  year       Int
+  lastValue  Int      @default(0)
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([businessId, year])
+}
+
+model Customer {
+  id            String    @id @default(uuid())
+  businessId    String
+  name          String
+  companyName   String?
+  email         String?
+  phone         String?
+  addressLine1  String?
+  addressLine2  String?
+  city          String?
+  region        String?
+  postalCode    String?
+  country       String?
+  taxIdentifier String?
+  internalNotes String?
+  version       Int       @default(1)
+  business      Business  @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  invoices      Invoice[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  archivedAt    DateTime?
+  deletedAt     DateTime?
+
+  @@index([businessId, name])
+  @@index([businessId, email])
+  @@index([businessId, archivedAt])
+}
+
+model TaxRate {
+  id         String   @id @default(uuid())
+  businessId String
+  name       String
+  rate       Decimal
+  isDefault  Boolean  @default(false)
+  isActive   Boolean  @default(true)
+  version    Int      @default(1)
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  archivedAt DateTime?
+
+  @@unique([businessId, name])
+  @@index([businessId, isActive])
+}
+
+model Invoice {
+  id                       String         @id @default(uuid())
+  businessId               String
+  customerId               String?
+  duplicatedFromInvoiceId  String?
+  number                   String?
+  status                   String         @default("DRAFT")
+  currency                 String         @default("USD")
+  taxMode                  String         @default("EXCLUSIVE")
+  issueDate                DateTime
+  dueDate                  DateTime
+  purchaseOrderNumber      String?
+  projectReference         String?
+  notes                    String?
+  internalNotes            String?
+  paymentTerms             String?
+  itemsSubtotal            Decimal        @default(0)
+  lineDiscountTotal        Decimal        @default(0)
+  invoiceDiscountType      String?
+  invoiceDiscountValue     Decimal?
+  invoiceDiscountTotal     Decimal        @default(0)
+  discountTotal            Decimal        @default(0)
+  netSubtotal              Decimal        @default(0)
+  taxTotal                 Decimal        @default(0)
+  grandTotal               Decimal        @default(0)
+  businessSnapshot         String?
+  customerSnapshot         String?
+  calculationSnapshot      String?
+  calculationChecksum      String?
+  calculationVersion       String         @default("1.0.0")
+  pdfPath                   String?
+  pdfChecksum               String?
+  finalizedAt              DateTime?
+  cancelledAt              DateTime?
+  voidedAt                 DateTime?
+  version                   Int            @default(1)
+  business                  Business       @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  customer                  Customer?       @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  items                     InvoiceItem[]
+  events                    InvoiceEvent[]
+  duplicatedFrom           Invoice?        @relation("InvoiceDuplication", fields: [duplicatedFromInvoiceId], references: [id], onDelete: SetNull)
+  duplicates               Invoice[]        @relation("InvoiceDuplication")
+  createdAt                 DateTime         @default(now())
+  updatedAt                 DateTime         @updatedAt
+  deletedAt                 DateTime?
+
+  @@unique([businessId, number])
+  @@index([businessId, status])
+  @@index([businessId, issueDate])
+  @@index([businessId, dueDate])
+  @@index([businessId, customerId])
+  @@index([businessId, number])
+}
+
+model InvoiceItem {
+  id                       String   @id @default(uuid())
+  invoiceId                String
+  position                 Int
+  description              String
+  quantity                 Decimal
+  unitPrice                Decimal
+  baseAmount               Decimal
+  discountType             String?
+  discountValue            Decimal?
+  discountAmount           Decimal
+  allocatedInvoiceDiscount Decimal
+  taxableAmount            Decimal
+  taxRateId                String?
+  taxName                  String?
+  taxRate                  Decimal
+  taxAmount                Decimal
+  lineTotal                Decimal
+  invoice                   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  @@unique([invoiceId, position])
+  @@index([invoiceId])
+}
+
+model InvoiceEvent {
+  id             String    @id @default(uuid())
+  businessId     String
+  invoiceId      String
+  actorUserId    String?
+  eventType      String
+  previousStatus String?
+  newStatus      String?
+  metadata       String    @default("{}")
+  requestId      String?
+  business       Business  @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  invoice        Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  actor          User?     @relation("EventActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  createdAt      DateTime  @default(now())
+
+  @@index([invoiceId, createdAt])
+  @@index([businessId, createdAt])
+}

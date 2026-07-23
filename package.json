@@ -1,0 +1,51 @@
+{
+  "name": "invoice-forge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run build -w @invoice-forge/domain && npm run build -w @invoice-forge/contracts && concurrently -n api,web -c auto \"npm run dev -w @invoice-forge/api\" \"npm run dev -w @invoice-forge/web\"",
+    "build": "npm run build -w @invoice-forge/domain && npm run build -w @invoice-forge/contracts && npm run build -w @invoice-forge/api && npm run build -w @invoice-forge/web",
+    "test": "npm run test -w @invoice-forge/domain && npm run test -w @invoice-forge/api",
+    "test:e2e": "playwright test",
+    "typecheck": "npm run build -w @invoice-forge/domain && npm run build -w @invoice-forge/contracts && npm run typecheck -w @invoice-forge/api && npm run typecheck -w @invoice-forge/web",
+    "lint": "eslint . --max-warnings=0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:seed": "prisma db seed",
+    "db:reset": "prisma migrate reset --force",
+    "setup": "npm run db:generate && npm run db:deploy && npm run db:seed"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.55.0",
+    "concurrently": "^9.2.1",
+    "eslint": "^10.7.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.3",
+    "globals": "^17.7.0",
+    "prettier": "^3.9.6",
+    "prisma": "^6.15.0",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.65.0",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "packageManager": "npm@11.16.0",
+  "allowScripts": {
+    "@prisma/client": true,
+    "@prisma/engines": true,
+    "esbuild": true,
+    "prisma": true
+  }
+}

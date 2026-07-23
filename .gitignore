@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+*.db
+*.db-journal
+apps/web/.vite/
+data/pdfs/*.pdf
+playwright-report/
+test-results/
+*.log
+.DS_Store

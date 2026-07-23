@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 56" role="img" aria-labelledby="title desc">
+  <title id="title">Invoice Forge</title><desc id="desc">A blue invoice document with a check-shaped total line.</desc>
+  <rect x="1" y="1" width="54" height="54" rx="13" fill="#2563EB"/>
+  <path d="M18 12h16l9 9v23H18z" fill="white" opacity=".98"/>
+  <path d="M34 12v10h9" fill="#DBEAFE"/>
+  <path d="M23 27h14M23 32h10" stroke="#2563EB" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="m23 38 4 4 11-9" fill="none" stroke="#0F766E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="69" y="36" fill="#0F172A" font-family="Inter,Arial,sans-serif" font-size="25" font-weight="750" letter-spacing="-.7">Invoice Forge</text>
+</svg>
